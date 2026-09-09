@@ -1,0 +1,19 @@
+.git
+.gitignore
+.dockerignore
+README.md
+
+# Environments & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & data
+*.log
+logs/
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

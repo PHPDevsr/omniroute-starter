@@ -1,0 +1,63 @@
+services:
+  omniroute:
+    image: diegosouzapw/omniroute:latest
+    container_name: omniroute
+    restart: unless-stopped
+    stop_grace_period: 40s
+
+    ports:
+      - "127.0.0.1:${OMNIROUTE_PORT:-30128}:20128"
+
+    environment:
+      TZ: Asia/Jakarta
+      PORT: 20128
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
+      OMNIROUTE_WS_BRIDGE_SECRET: ${OMNIROUTE_WS_BRIDGE_SECRET}
+      OMNIROUTE_MEMORY_MB: ${OMNIROUTE_MEMORY_MB:-4096}
+      REDIS_URL: redis://redis:6379
+
+    volumes:
+      - omniroute-data:/app/data
+
+    depends_on:
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:20128/api/monitoring/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1)"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: omniroute-redis
+    restart: unless-stopped
+
+    volumes:
+      - omniroute-redis:/data
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  omniroute-data:
+    name: omniroute-data
+
+  omniroute-redis:
+    name: omniroute-redis
